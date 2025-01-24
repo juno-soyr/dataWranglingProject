@@ -1,0 +1,49 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+users_path = '../Raw Data/concurrent_steam_users.csv'
+sales_path = '../Raw Data/steam_sales_dates.csv'
+
+users_data = pd.read_csv(users_path)
+sales_data = pd.read_csv(sales_path)
+
+users_data['DateTime'] = pd.to_datetime(users_data['DateTime'])
+sales_data['Start Date'] = pd.to_datetime(sales_data['Start Date'], format='%m/%d/%Y')
+sales_data['End Date'] = pd.to_datetime(sales_data['End Date'], format='%m/%d/%Y')
+
+start_date = '2024-01-01'
+
+
+filtered_users_data = users_data[
+    (users_data['DateTime'] >= start_date) & 
+    (users_data['DateTime'] <= '2025-01-20') 
+]
+
+filtered_users_data = filtered_users_data.copy()
+filtered_users_data['Date'] = filtered_users_data['DateTime'].dt.date
+
+daily_aggregation = (
+    filtered_users_data
+    .groupby('Date')['In-Game']
+    .agg(['mean', 'max', 'min']) 
+    .reset_index()  
+)
+
+plt.figure(figsize=(20, 10))
+plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
+
+
+for index, row in sales_data.iterrows():
+    if row['Start Date'] >= pd.Timestamp(start_date):
+        plt.axvspan(row['Start Date'], row['End Date'], color='red', alpha=0.2)
+
+plt.xlabel('Date', fontsize=14)
+plt.ylabel('In Game Users', fontsize=14)
+plt.grid(alpha=0.2)
+plt.tight_layout()
+plt.show()
+
+
+
+
+
