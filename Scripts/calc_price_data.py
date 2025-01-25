@@ -3,7 +3,7 @@ import pandas as pd
 
 def calculate_daily_average(df):
 
-    df['DateTime'] = pd.to_datetime(df['DateTime'])
+    df['DateTime'] = pd.to_datetime(df['DateTime'], format='%m/%d/%Y')
 
     df = df.sort_values(by='DateTime')
     
@@ -14,12 +14,14 @@ def calculate_daily_average(df):
     
     df_avg = df.groupby(df['DateTime'].dt.date)['Final price'].mean().reset_index()
     df_avg.columns = ['DateTime', 'AvgDailyPrice']
+    df_avg['DateTime'] = pd.to_datetime(df_avg['DateTime'], format='%m/%d/%Y')
 
     return df_avg
 
 def avg(file_path):
    
     df = pd.read_csv(file_path)
+    
     filename = os.path.basename(file_path)
 
     if 'DateTime' in df.columns and 'Final price' in df.columns:

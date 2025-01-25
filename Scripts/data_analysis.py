@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from calc_price_data import avg
+import matplotlib.dates as mdates
 
 users_path = '../Raw Data/concurrent_steam_users.csv'
 sales_path = '../Raw Data/steam_sales_dates.csv'
@@ -10,6 +12,8 @@ sales_data = pd.read_csv(sales_path)
 users_data['DateTime'] = pd.to_datetime(users_data['DateTime'])
 sales_data['Start Date'] = pd.to_datetime(sales_data['Start Date'], format='%m/%d/%Y')
 sales_data['End Date'] = pd.to_datetime(sales_data['End Date'], format='%m/%d/%Y')
+# sales_data['Start Date'] = sales_data['Start Date'].dt.date
+# sales_data['End Date'] = sales_data['End Date'].dt.date
 
 start_date = '2024-01-01'
 
@@ -26,12 +30,18 @@ daily_aggregation = (
     filtered_users_data
     .groupby('Date')['In-Game']
     .agg(['mean', 'max', 'min']) 
-    .reset_index()  
+    .reset_index()
 )
 
-plt.figure(figsize=(20, 10))
-plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
+avg('../Raw Data/ind_sales_data/gta5.csv')
+avg = pd.read_csv('../Raw Data/ind_sales_data/gta5.csv_davg.csv')
+#avg.to_csv('../Raw Data/ind_sales_data/gta5.csv_davg.csv', index=False)
+# daily_aggregation['Date'] = pd.to_datetime(daily_aggregation['Date'])
 
+plt.figure(figsize=(20, 10))
+plt.plot(avg['DateTime'], avg['AvgDailyPrice'], linewidth=2, color = 'blue')
+# plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
+#plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
 
 for index, row in sales_data.iterrows():
     if row['Start Date'] >= pd.Timestamp(start_date):
@@ -42,8 +52,3 @@ plt.ylabel('In Game Users', fontsize=14)
 plt.grid(alpha=0.2)
 plt.tight_layout()
 plt.show()
-
-
-
-
-
