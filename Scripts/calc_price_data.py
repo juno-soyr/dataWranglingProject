@@ -1,9 +1,20 @@
 import os
 import pandas as pd
 
+def fill_daily_prices(df, date_col, value_col):
+ 
+    df[date_col] = pd.to_datetime(df[date_col])
+    full_date_range = pd.date_range(start=df[date_col].min(), end=df[date_col].max())
+    df = df.set_index(date_col).reindex(full_date_range, method='ffill')
+    df.reset_index(inplace=True)
+
+    df.columns = [date_col, value_col]
+    
+    return df
+
 def calculate_daily_average(df):
 
-    df['DateTime'] = pd.to_datetime(df['DateTime'], format='%m/%d/%Y')
+    df['DateTime'] = pd.to_datetime(df['DateTime'])
 
     df = df.sort_values(by='DateTime')
     
@@ -14,7 +25,6 @@ def calculate_daily_average(df):
     
     df_avg = df.groupby(df['DateTime'].dt.date)['Final price'].mean().reset_index()
     df_avg.columns = ['DateTime', 'AvgDailyPrice']
-    df_avg['DateTime'] = pd.to_datetime(df_avg['DateTime'], format='%m/%d/%Y')
 
     return df_avg
 

@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from calc_price_data import avg
-import matplotlib.dates as mdates
+from calc_price_data import avg, fill_daily_prices
 
 users_path = '../Raw Data/concurrent_steam_users.csv'
 sales_path = '../Raw Data/steam_sales_dates.csv'
@@ -12,8 +11,6 @@ sales_data = pd.read_csv(sales_path)
 users_data['DateTime'] = pd.to_datetime(users_data['DateTime'])
 sales_data['Start Date'] = pd.to_datetime(sales_data['Start Date'], format='%m/%d/%Y')
 sales_data['End Date'] = pd.to_datetime(sales_data['End Date'], format='%m/%d/%Y')
-# sales_data['Start Date'] = sales_data['Start Date'].dt.date
-# sales_data['End Date'] = sales_data['End Date'].dt.date
 
 start_date = '2024-01-01'
 
@@ -32,16 +29,18 @@ daily_aggregation = (
     .agg(['mean', 'max', 'min']) 
     .reset_index()
 )
+#daily_aggregation['Date'] = pd.to_datetime(daily_aggregation['Date'])
 
 avg('../Raw Data/ind_sales_data/gta5.csv')
-avg = pd.read_csv('../Raw Data/ind_sales_data/gta5.csv_davg.csv')
-#avg.to_csv('../Raw Data/ind_sales_data/gta5.csv_davg.csv', index=False)
-# daily_aggregation['Date'] = pd.to_datetime(daily_aggregation['Date'])
+avg_data = pd.read_csv('../Raw Data/ind_sales_data/gta5.csv_davg.csv')
+avg_data = avg_data[avg_data['DateTime'] >= start_date]
+avg_data['DateTime'] = pd.to_datetime(avg_data['DateTime'])
+
+avg_data = fill_daily_prices(avg_data, 'DateTime', 'AvgDailyPrice')
 
 plt.figure(figsize=(20, 10))
-plt.plot(avg['DateTime'], avg['AvgDailyPrice'], linewidth=2, color = 'blue')
-# plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
-#plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+plt.plot(avg_data['DateTime'], avg_data['AvgDailyPrice'], linewidth=2, color = 'blue')
+#plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
 
 for index, row in sales_data.iterrows():
     if row['Start Date'] >= pd.Timestamp(start_date):
