@@ -39,7 +39,7 @@ def print_free(directory):
                 print(f"Game {number}{letter} went free")
 
 
-directory_path = "../Raw Data/ind_sales_data/"
+directory_path = "../Raw Data/ind_sales_data"
 
 # gta5_path ="../Raw Data/ind_sales_data/gta5.csv"
 # csgo_path = "../Raw Data/ind_sales_data/csgo.csv"
