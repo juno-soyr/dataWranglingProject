@@ -1,11 +1,17 @@
 import os
 import pandas as pd
-import re
 
 def calculate_daily_average(df):
 
     df['DateTime'] = pd.to_datetime(df['DateTime'])
 
+    df = df.sort_values(by='DateTime')
+    
+    df = df[(df['Final price'] != 0) | 
+            ((df['Final price'] == 0) & 
+             (~((df['DateTime'].diff().abs() < pd.Timedelta(hours=12)) | 
+                (df['DateTime'].diff(-1).abs() < pd.Timedelta(hours=12)))))]
+    
     df_avg = df.groupby(df['DateTime'].dt.date)['Final price'].mean().reset_index()
     df_avg.columns = ['DateTime', 'AvgDailyPrice']
 
@@ -14,12 +20,14 @@ def calculate_daily_average(df):
 def avg(file_path):
    
     df = pd.read_csv(file_path)
+    filename = os.path.basename(file_path)
 
-    if 'DateTime' in df_cleaned.columns and 'Final price' in df_cleaned.columns:
+    if 'DateTime' in df.columns and 'Final price' in df.columns:
 
-        df_avg = calculate_daily_average(df_cleaned)
+        df_avg = calculate_daily_average(df)
         
-        new_filename = f"{os.path.splitext(filename)[0]}_davg.csv"
+        new_filename = f"{filename}_davg.csv"
+        directory = os.path.dirname(file_path)
         new_file_path = os.path.join(directory, new_filename)
         
         df_avg.to_csv(new_file_path, index=False)
@@ -27,5 +35,3 @@ def avg(file_path):
         print(f"calc avg daily price for {new_filename}")
     else:
         print(f"File {filename} aint it")
-
-avg('../Raw Data/ind_sales_data/gta5.csv')
