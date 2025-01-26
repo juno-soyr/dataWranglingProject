@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from calc_price_data import avg, fill_daily_prices
 
 users_path = '../Raw Data/concurrent_steam_users.csv'
 sales_path = '../Raw Data/steam_sales_dates.csv'
@@ -26,12 +27,20 @@ daily_aggregation = (
     filtered_users_data
     .groupby('Date')['In-Game']
     .agg(['mean', 'max', 'min']) 
-    .reset_index()  
+    .reset_index()
 )
+#daily_aggregation['Date'] = pd.to_datetime(daily_aggregation['Date'])
+
+avg('../Raw Data/ind_sales_data/gta5.csv')
+avg_data = pd.read_csv('../Raw Data/ind_sales_data/gta5.csv_davg.csv')
+avg_data = avg_data[avg_data['DateTime'] >= start_date]
+avg_data['DateTime'] = pd.to_datetime(avg_data['DateTime'])
+
+avg_data = fill_daily_prices(avg_data, 'DateTime', 'AvgDailyPrice')
 
 plt.figure(figsize=(20, 10))
-plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
-
+plt.plot(avg_data['DateTime'], avg_data['AvgDailyPrice'], linewidth=2, color = 'blue')
+#plt.plot(daily_aggregation['Date'], daily_aggregation['max'], linewidth=2, color = 'green')
 
 for index, row in sales_data.iterrows():
     if row['Start Date'] >= pd.Timestamp(start_date):
@@ -42,8 +51,3 @@ plt.ylabel('In Game Users', fontsize=14)
 plt.grid(alpha=0.2)
 plt.tight_layout()
 plt.show()
-
-
-
-
-
