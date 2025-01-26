@@ -1,5 +1,7 @@
 import pandas as pd
 import os
+import re
+
 
 import matplotlib.pyplot as plt
 
@@ -10,8 +12,10 @@ data_dir = 'Raw Data/ind_sales_data/'
 df_list = []
 
 # Iterate over all files in the directory
+pattern = re.compile(r'^\d+[A-Za-z]\.csv$')
+
 for file in os.listdir(data_dir):
-    if file.endswith('.csv'):
+    if pattern.match(file):
         file_path = os.path.join(data_dir, file)
         df = pd.read_csv(file_path)
         df_list.append(df)
@@ -28,9 +32,9 @@ for i, df in enumerate(df_list):
     # Forward fill to keep the most recent value for empty cells
     df.ffill(inplace=True)
     # Add the final price column to the all_data_df with a unique name
-    all_data_df[f'final_price_{cnt}'] = df.iloc[:, 1]
+    all_data_df[f'final_price_{cnt}'] = df.iloc[:, 1]  
     cnt += 1
-    
+print(all_data_df)
 all_data_df['mean_final_price'] = all_data_df.mean(axis=1)
 
 # Load the sales data
@@ -41,4 +45,4 @@ plt.xlabel('Index')
 plt.ylabel('Mean Final Price')
 plt.title('Mean Final Price Over Time')
 plt.legend()
-plt.show()
+#plt.show()
