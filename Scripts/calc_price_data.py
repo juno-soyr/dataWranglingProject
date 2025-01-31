@@ -43,7 +43,5 @@ def avg(file_path):
         new_file_path = os.path.join(directory, new_filename)
         
         df_avg.to_csv(new_file_path, index=False)
-
-        print(f"calc avg daily price for {new_filename}")
     else:
         print(f"File {filename} aint it")

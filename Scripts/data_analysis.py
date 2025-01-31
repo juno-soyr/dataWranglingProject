@@ -32,7 +32,7 @@ def make_global_price_data(ind_sales_dir, start_date, end_date):
             global_data = pd.concat([global_data, avg_data['AvgDailyPrice']], axis=1)
 
     global_data['mean'] = global_data.mean(axis=1)
-    global_data['DateTime'] = avg_data['DateTime']
+    global_data['Date'] = avg_data['DateTime']
     return global_data
 
 def process_users_data(users_path, start_date, end_date):
@@ -57,20 +57,58 @@ def process_users_data(users_path, start_date, end_date):
     daily_aggregation['Date'] = pd.to_datetime(daily_aggregation['Date'])
     return daily_aggregation
 
-sales_data = pd.read_csv(sales_path)
-sales_data['Start Date'] = pd.to_datetime(sales_data['Start Date'], format='%m/%d/%Y')
-sales_data['End Date'] = pd.to_datetime(sales_data['End Date'], format='%m/%d/%Y')
+def mark_sale_periods(data, sales_period, date_column='DateTime', pre_sale_days=7, post_sale_days=7):
+
+    sale_status = ['Pre-Sale', 'During Sale', 'Post-Sale', 'No Sale']
+    
+    data['SalePeriod'] = 'No Sale'
+    
+    for _, row in sales_period.iterrows():
+        start_date = row['Start Date']
+        end_date = row['End Date']
+
+        data.loc[
+            (data[date_column] >= start_date - pd.Timedelta(days=pre_sale_days)) &
+            (data[date_column] < start_date),
+            'SalePeriod'
+        ] = 'Pre-Sale'
+
+        data.loc[
+            (data[date_column] >= start_date) &
+            (data[date_column] <= end_date),
+            'SalePeriod'
+        ] = 'During Sale'
+
+        data.loc[
+            (data[date_column] > end_date) &
+            (data[date_column] <= end_date + pd.Timedelta(days=post_sale_days)),
+            'SalePeriod'
+        ] = 'Post-Sale'
+    
+    data['SalePeriod'] = pd.Categorical(data['SalePeriod'], categories=sale_status, ordered=True)
+    
+    return data
+
+sales_period = pd.read_csv(sales_path)
+sales_period['Start Date'] = pd.to_datetime(sales_period['Start Date']).dt.date
+sales_period['End Date'] = pd.to_datetime(sales_period['End Date']).dt.date
+
 
 user_data_f = process_users_data(users_path, start_date, end_date)
+global_price_data = make_global_price_data(ind_sales_path, start_date, end_date)
 
-global_data = make_global_price_data(ind_sales_path, start_date, end_date)
+global_price_data['Date'] = pd.to_datetime(global_price_data['Date']).dt.date
+user_data_f['Date'] = pd.to_datetime(user_data_f['Date']).dt.date
 
-plt.figure(figsize=(20, 10))
-plt.plot(global_data['DateTime'], global_data['mean'], linewidth=2, color = 'blue')
+global_price_data = mark_sale_periods(global_price_data, sales_period, date_column='Date')
+user_data_f = mark_sale_periods(user_data_f, sales_period, date_column='Date')
+
+plt.figure(figsize=(10, 5))
+plt.plot(global_price_data['Date'], global_price_data['mean'], linewidth=2, color = 'blue')
 #plt.plot(user_data_f['Date'], user_data_f['max'], linewidth=2, color = 'green')
 
-for index, row in sales_data.iterrows():
-    if row['Start Date'] >= pd.Timestamp(start_date):
+for index, row in sales_period.iterrows():
+    if row['Start Date'] >= pd.Timestamp(start_date).date():
         plt.axvspan(row['Start Date'], row['End Date'], color='red', alpha=0.2)
 
 plt.xlabel('Date', fontsize=14)
