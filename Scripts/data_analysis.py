@@ -160,7 +160,7 @@ valid_dates = global_price_data['Date'][rolling_corr.index]
 plt.figure(figsize=(10, 5))
 plt.plot(valid_dates, rolling_corr, color='purple', label="30-Day Rolling Correlation")
 for _, row in sales_period.iterrows():
-    if row['Start Date'] >= global_price_data['Date'].min():
+    if row['Start Date'] >= global_price_data['Date'].min() and row['Start Date'] <= global_price_data['Date'].max():
         plt.axvspan(row['Start Date'], row['End Date'], color='red', alpha=0.2)
 plt.axhline(y=0, color='gray', linestyle='--')
 plt.title("Rolling Correlation: Price vs. Player Count")
@@ -169,6 +169,35 @@ plt.ylabel("Correlation")
 plt.legend()
 plt.grid()
 plt.show()
+
+def compute_correlation_by_sale_period(global_price_data, user_data_f):
+    sale_periods = ['Pre-Sale', 'During Sale', 'Post-Sale', 'No Sale']
+    sale_period_correlations = {}
+
+    for period in sale_periods:
+        subset_prices = global_price_data[global_price_data['SalePeriod'] == period]
+        subset_users = user_data_f[user_data_f['SalePeriod'] == period]
+        
+        correlation = subset_prices['mean'].corr(subset_users['mean'])
+        
+        sale_period_correlations[period] = correlation
+    
+    return sale_period_correlations
+
+def plot_correlation_by_sale_period(sale_period_correlations):
+    filtered_correlations = {k: v for k, v in sale_period_correlations.items() if v is not None}
+    
+    plt.figure(figsize=(8, 5))
+    plt.bar(filtered_correlations.keys(), filtered_correlations.values(), color=['blue', 'orange', 'green', 'red'])
+    plt.xlabel("Sale Period", fontsize=12)
+    plt.ylabel("Correlation", fontsize=12)
+    plt.title("Correlation Between Price and Player Count by Sale Period", fontsize=14)
+    plt.axhline(y=0, color='gray', linestyle='--')
+    plt.grid(axis='y', linestyle='--', alpha=0.6)
+    plt.show()
+
+sale_period_correlations = compute_correlation_by_sale_period(global_price_data, user_data_f)
+plot_correlation_by_sale_period(sale_period_correlations)
 
 
 
