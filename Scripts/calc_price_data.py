@@ -1,11 +1,12 @@
 import os
 import pandas as pd
 
-def fill_daily_prices(df, date_col, value_col):
+def fill_daily_prices(df, date_col, value_col,start_date, end_date):
  
     df[date_col] = pd.to_datetime(df[date_col])
-    full_date_range = pd.date_range(start=df[date_col].min(), end=df[date_col].max())
+    full_date_range = pd.date_range(start=start_date, end=end_date, freq='D')
     df = df.set_index(date_col).reindex(full_date_range, method='ffill')
+    df = df.bfill()
     df.reset_index(inplace=True)
 
     df.columns = [date_col, value_col]
@@ -20,8 +21,11 @@ def calculate_daily_average(df):
     
     df = df[(df['Final price'] != 0) | 
             ((df['Final price'] == 0) & 
-             (~((df['DateTime'].diff().abs() < pd.Timedelta(hours=12)) | 
-                (df['DateTime'].diff(-1).abs() < pd.Timedelta(hours=12)))))]
+            (~((df['DateTime'].diff().abs() < pd.Timedelta(hours=12)) | 
+                (df['DateTime'].diff(-1).abs() < pd.Timedelta(hours=12))))) & 
+            (df['DateTime'].shift(-1) - df['DateTime'] <= pd.Timedelta(days=14))
+        ]
+
     
     df_avg = df.groupby(df['DateTime'].dt.date)['Final price'].mean().reset_index()
     df_avg.columns = ['DateTime', 'AvgDailyPrice']
